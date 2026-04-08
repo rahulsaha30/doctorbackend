@@ -2,32 +2,32 @@
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ Add Controllers
+// Controllers
 builder.Services.AddControllers();
 
-// ✅ Email config
+// Email settings
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
-// ✅ CORS
+// 🔥 CORS (FULL FIX)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddDefaultPolicy(policy =>
     {
         policy
-            .WithOrigins("https://doctorfrontend-five.vercel.app") // <-- your frontend origin
+            .AllowAnyOrigin()
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials(); // only if you need to send cookies/credentials
+            .AllowAnyMethod();
     });
 });
 
 var app = builder.Build();
 
-// ✅ IMPORTANT ORDER
+// 🔥 ORDER IS CRITICAL
+app.UseCors();          // apply globally FIRST
+
 app.UseRouting();
-app.UseCors("AllowFrontend");
-app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
