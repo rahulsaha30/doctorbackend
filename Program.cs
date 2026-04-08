@@ -5,17 +5,17 @@ var builder = WebApplication.CreateBuilder(args);
 // ✅ Add Controllers
 builder.Services.AddControllers();
 
-// ✅ Bind EmailSettings
+// ✅ Email config
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
-// ✅ CORS (FIXED)
+// ✅ CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .AllowAnyOrigin()      // 🔥 TEMP: ensures it works 100%
+            .AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -23,10 +23,21 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// ✅ Middleware Order (CRITICAL)
+// ✅ IMPORTANT ORDER
 app.UseRouting();
 
-app.UseCors("AllowFrontend");   // MUST be here
+app.UseCors("AllowFrontend");
+
+// 🔥 HANDLE PREFLIGHT (OPTIONS)
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 200;
+        return;
+    }
+    await next();
+});
 
 app.UseAuthorization();
 
