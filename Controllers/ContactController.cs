@@ -1,8 +1,8 @@
-using doctor.Model;
+﻿using doctor.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 
 namespace clinicdoctor.Controllers
 {
@@ -23,17 +23,28 @@ namespace clinicdoctor.Controllers
             try
             {
                 var client = new HttpClient();
-                client.DefaultRequestHeaders.Add("api-key", _emailSettings.Password);
 
-                var json = $@"
-                {{
-                    ""sender"": {{ ""email"": ""{_emailSettings.Email}"" }},
-                    ""to"": [{{ ""email"": ""{_emailSettings.Email}"" }}],
-                    ""subject"": ""New Message from {request.Name}"",
-                    ""htmlContent"": ""<p><b>Name:</b> {request.Name}</p>
-                                     <p><b>Email:</b> {request.Email}</p>
-                                     <p><b>Message:</b> {request.Message}</p>""
-                }}";
+                // ✅ Add API key properly
+                client.DefaultRequestHeaders.Remove("api-key");
+                client.DefaultRequestHeaders.Add("api-key", _emailSettings.Password?.Trim());
+
+                // ✅ Proper JSON (NO manual string)
+                var emailData = new
+                {
+                    sender = new { email = _emailSettings.Email },
+                    to = new[]
+                    {
+                        new { email = _emailSettings.Email }
+                    },
+                    subject = $"New Message from {request.Name}",
+                    htmlContent = $@"
+                        <p><b>Name:</b> {request.Name}</p>
+                        <p><b>Email:</b> {request.Email}</p>
+                        <p><b>Message:</b> {request.Message}</p>
+                    "
+                };
+
+                var json = JsonSerializer.Serialize(emailData);
 
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -44,10 +55,11 @@ namespace clinicdoctor.Controllers
 
                 var result = await response.Content.ReadAsStringAsync();
 
+                // ✅ Return full debug info (useful now)
                 return Ok(new
                 {
                     success = response.IsSuccessStatusCode,
-                    response = result
+                    brevoResponse = result
                 });
             }
             catch (Exception ex)
@@ -55,7 +67,8 @@ namespace clinicdoctor.Controllers
                 return StatusCode(500, new
                 {
                     success = false,
-                    error = ex.Message
+                    error = ex.Message,
+                    inner = ex.InnerException?.Message
                 });
             }
         }
