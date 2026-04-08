@@ -1,0 +1,59 @@
+# Visual Studio
+.vs/
+
+# Build folders
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+
+# Do NOT commit local appsettings with secrets
+appsettings.json
+appsettings.Development.json
+
+# dotnet user secrets file
+secrets.json
+appsettings.json.example
+
+# 1) Configure git with your identity
+git config --global user.name "Raulsaha30"
+git config --global user.email "rahulsaha1126@gmail.com"
+
+# 2) Install MailKit package
+__dotnet add package MailKit__
+
+# 3) (Optional but recommended) Replace appsettings.json with example and keep real secrets out of commits:
+# - Move your real appsettings.json somewhere safe (or use __dotnet user-secrets__ / Azure Key Vault)
+# - Create appsettings.json from example only if you want placeholders committed
+cp appsettings.json appsettings.local.json 2>/dev/null || true
+cp appsettings.json.example appsettings.json
+
+# 4) Initialize git repo (if not initialized), add, commit
+git init
+git add .
+git commit -m "Initial commit: secure settings, MailKit email sender, gitignore updated"
+
+# 5) Add remote and push to GitHub (HTTPS). When prompted use a PAT with repo scope.
+git remote add origin https://github.com/Rahulsaha30/Doctor-.git
+git branch -M main
+git push -u origin main
