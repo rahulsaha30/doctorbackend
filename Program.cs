@@ -15,9 +15,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .AllowAnyOrigin()
+            .WithOrigins("https://doctorfrontend-five.vercel.app") // <-- your frontend origin
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials(); // only if you need to send cookies/credentials
     });
 });
 
@@ -25,22 +26,8 @@ var app = builder.Build();
 
 // ✅ IMPORTANT ORDER
 app.UseRouting();
-
 app.UseCors("AllowFrontend");
-
-// 🔥 HANDLE PREFLIGHT (OPTIONS)
-app.Use(async (context, next) =>
-{
-    if (context.Request.Method == "OPTIONS")
-    {
-        context.Response.StatusCode = 200;
-        return;
-    }
-    await next();
-});
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
