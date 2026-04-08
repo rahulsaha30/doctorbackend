@@ -9,29 +9,24 @@ builder.Services.AddControllers();
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
-// ✅ CORS
+// ✅ CORS (FIXED)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "https://doctorfrontend-five.vercel.app"
-            )
+            .AllowAnyOrigin()      // 🔥 TEMP: ensures it works 100%
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials(); // 🔥 IMPORTANT
+            .AllowAnyMethod();
     });
 });
 
 var app = builder.Build();
 
-// ✅ ORDER MATTERS 🔥
+// ✅ Middleware Order (CRITICAL)
 app.UseRouting();
 
-app.UseCors("AllowFrontend"); // must be after routing
+app.UseCors("AllowFrontend");   // MUST be here
 
 app.UseAuthorization();
 
