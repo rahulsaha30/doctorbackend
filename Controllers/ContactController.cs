@@ -7,7 +7,7 @@ using System.Net.Mail;
 namespace doctor.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/email")]
     public class ContactController : ControllerBase
     {
         private readonly EmailSettings _emailSettings;
