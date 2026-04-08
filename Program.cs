@@ -5,11 +5,11 @@ var builder = WebApplication.CreateBuilder(args);
 // ✅ Add Controllers
 builder.Services.AddControllers();
 
-// ✅ Bind EmailSettings from appsettings.json
+// ✅ Bind EmailSettings
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
-// ✅ CORS (for React frontend)
+// ✅ CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -17,27 +17,24 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(
                 "http://localhost:3000",
-                "http://localhost:5173"
+                "http://localhost:5173",
+                "https://doctorfrontend-five.vercel.app"
             )
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials(); // 🔥 IMPORTANT
     });
 });
 
-// ✅ Swagger (optional but useful)
-builder.Services.AddEndpointsApiExplorer();
-
 var app = builder.Build();
 
-// ✅ Enable Swagger
+// ✅ ORDER MATTERS 🔥
+app.UseRouting();
 
-// ❌ Remove HTTPS if causing issues (optional)
-// app.UseHttpsRedirection();
+app.UseCors("AllowFrontend"); // must be after routing
 
-// ✅ Enable CORS
-app.UseCors("AllowFrontend");
+app.UseAuthorization();
 
-// ✅ Map Controllers
 app.MapControllers();
 
 app.Run();
