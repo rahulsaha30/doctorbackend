@@ -1,18 +1,18 @@
 using doctor.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using System.Net;
-using System.Net.Mail;
+using System.Net.Http.Headers;
+using System.Text;
 
-namespace doctor.Controllers
+namespace clinicdoctor.Controllers
 {
     [ApiController]
     [Route("api/email")]
-    public class ContactController : ControllerBase
+    public class EmailController : ControllerBase
     {
         private readonly EmailSettings _emailSettings;
 
-        public ContactController(IOptions<EmailSettings> emailSettings)
+        public EmailController(IOptions<EmailSettings> emailSettings)
         {
             _emailSettings = emailSettings.Value;
         }
@@ -20,45 +20,35 @@ namespace doctor.Controllers
         [HttpPost]
         public async Task<IActionResult> SendEmail([FromBody] ContactRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Name) ||
-                string.IsNullOrWhiteSpace(request.Email) ||
-                string.IsNullOrWhiteSpace(request.Message))
-            {
-                return BadRequest(new { success = false, error = "All fields required" });
-            }
-
             try
             {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("api-key", _emailSettings.Password);
 
-                var mail = new MailMessage
+                var json = $@"
+                {{
+                    ""sender"": {{ ""email"": ""{_emailSettings.Email}"" }},
+                    ""to"": [{{ ""email"": ""{_emailSettings.Email}"" }}],
+                    ""subject"": ""New Message from {request.Name}"",
+                    ""htmlContent"": ""<p><b>Name:</b> {request.Name}</p>
+                                     <p><b>Email:</b> {request.Email}</p>
+                                     <p><b>Message:</b> {request.Message}</p>""
+                }}";
+
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync(
+                    "https://api.brevo.com/v3/smtp/email",
+                    content
+                );
+
+                var result = await response.Content.ReadAsStringAsync();
+
+                return Ok(new
                 {
-                    From = new MailAddress(_emailSettings.Email),
-                    Subject = $"New Message from {request.Name}",
-                    Body = $@"
-Name: {request.Name}
-Email: {request.Email}
-
-Message:
-{request.Message}
-"
-                };
-
-                mail.To.Add(_emailSettings.Email);
-
-                var smtp = new SmtpClient(_emailSettings.Host, _emailSettings.Port)
-                {
-                    Credentials = new NetworkCredential(
-                        _emailSettings.Email,
-                        _emailSettings.Password
-                    ),
-                    EnableSsl = true,
-                    UseDefaultCredentials = false
-                };
-
-                await smtp.SendMailAsync(mail);
-
-                return Ok(new { success = true });
+                    success = response.IsSuccessStatusCode,
+                    response = result
+                });
             }
             catch (Exception ex)
             {
