@@ -9,7 +9,6 @@ namespace doctor.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [EnableCors("AllowAll")]
     public class ContactController : ControllerBase
     {
         private readonly EmailSettings _emailSettings;
