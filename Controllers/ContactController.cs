@@ -1,4 +1,5 @@
 using doctor.Model;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.Net;
@@ -8,6 +9,7 @@ namespace doctor.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [EnableCors("AllowAll")]
     public class ContactController : ControllerBase
     {
         private readonly EmailSettings _emailSettings;

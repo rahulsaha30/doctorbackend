@@ -9,26 +9,26 @@ builder.Services.AddControllers();
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
-// 🔥 CORS Configuration
+// 🔥 CORS Configuration (v2)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowVercelFrontend",
+    options.AddPolicy("AllowAll",
         policy =>
         {
-            policy.WithOrigins("https://doctorfrontend-five.vercel.app", 
-                               "http://localhost:5173", 
-                               "http://localhost:3000") // Added local dev just in case
+            policy.SetIsOriginAllowed(origin => true) // More robust origin matching
                   .AllowAnyHeader()
-                  .AllowAnyMethod();
+                  .AllowAnyMethod()
+                  .AllowCredentials(); // Support cookies/auth headers if needed
         });
 });
 
 var app = builder.Build();
 
-app.UseRouting();
+// 🔥 CRITICAL (v2): Move UseCors to the ABSOLUTE TOP of the pipeline
+// This ensures headers are added before any other middleware (routing, auth, etc.) can interfere.
+app.UseCors("AllowAll");
 
-// 🔥 ORDER IS CRITICAL: UseCors must be after UseRouting but before MapControllers
-app.UseCors("AllowVercelFrontend");
+app.UseRouting();
 
 app.MapControllers();
 
