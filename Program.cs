@@ -1,4 +1,4 @@
-﻿using doctor.Model;
+using doctor.Model;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,24 +9,26 @@ builder.Services.AddControllers();
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
-// 🔥 CORS (FULL FIX)
+// 🔥 CORS Configuration
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
-    {
-        policy
-            .AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-    });
+    options.AddPolicy("AllowVercelFrontend",
+        policy =>
+        {
+            policy.WithOrigins("https://doctorfrontend-five.vercel.app", 
+                               "http://localhost:5173", 
+                               "http://localhost:3000") // Added local dev just in case
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
 });
 
 var app = builder.Build();
 
-// 🔥 ORDER IS CRITICAL
-app.UseCors();          // apply globally FIRST
-
 app.UseRouting();
+
+// 🔥 ORDER IS CRITICAL: UseCors must be after UseRouting but before MapControllers
+app.UseCors("AllowVercelFrontend");
 
 app.MapControllers();
 
